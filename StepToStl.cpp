@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-int step2stl(char *in, char *out)
+bool step2stl(char *in, char *out, bool ascii_mode = false)
 {
     // Read from STEP
     STEPControl_Reader reader;
@@ -16,23 +16,32 @@ int step2stl(char *in, char *out)
     Standard_Integer NbRoots = reader.NbRootsForTransfer();
     Standard_Integer NbTrans = reader.TransferRoots();
     TopoDS_Shape Original_Solid = reader.OneShape();
-
+    std::cout << "shape type: " << Original_Solid.ShapeType() << std::endl;
     // Write to STL
     StlAPI_Writer stlWriter = StlAPI_Writer();
-    stlWriter.ASCIIMode() = Standard_False;
+    stlWriter.ASCIIMode() = ascii_mode;
     BRepMesh_IncrementalMesh Mesh(Original_Solid, 0.01);
-    Mesh.Perform();
-    stlWriter.Write(Original_Solid, out);
-    return 0;
+    if (Mesh.IsDone())
+    {
+        stlWriter.Write(Original_Solid, out);
+        return true;
+    }
+    std::cerr << "Failed to convert!" << std::endl;
+    return false;
 }
 
-Standard_Integer main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    if (argc != 3)
+    if (argc < 3)
     {
-        std::cerr << "Usage: " << argv[0] << " file.step file.stl" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " file.step file.stl [using_ascii_mode]" << std::endl;
         return 1;
     }
+    bool ascii_mode = false;
+    if (argc >= 4)
+    {
+        ascii_mode = !!atoi(argv[3]);
+    }
 
-    return step2stl(argv[1], argv[2]);
+    return step2stl(argv[1], argv[2], ascii_mode);
 }
