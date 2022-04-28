@@ -16,17 +16,25 @@ bool step2stl(char *in, char *out, bool ascii_mode = false)
     Standard_Integer NbRoots = reader.NbRootsForTransfer();
     Standard_Integer NbTrans = reader.TransferRoots();
     TopoDS_Shape Original_Solid = reader.OneShape();
-    std::cout << "shape type: " << Original_Solid.ShapeType() << std::endl;
     // Write to STL
-    StlAPI_Writer stlWriter = StlAPI_Writer();
-    stlWriter.ASCIIMode() = ascii_mode;
-    BRepMesh_IncrementalMesh Mesh(Original_Solid, 0.01);
-    if (Mesh.IsDone())
+    try
     {
+        StlAPI_Writer stlWriter = StlAPI_Writer();
+        stlWriter.ASCIIMode() = ascii_mode;
+        BRepMesh_IncrementalMesh Mesh(Original_Solid, 0.01);
         stlWriter.Write(Original_Solid, out);
+        std::cout << "Success, out file: " << out << std::endl;
         return true;
     }
-    std::cerr << "Failed to convert!" << std::endl;
+    catch (Standard_Failure &e)
+    {
+        std::cerr << e.GetMessageString() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "Failed to convert!" << std::endl;
+    }
+    std::cout << "Failed\n";
     return false;
 }
 
